@@ -4,6 +4,8 @@
 
 ## 课程结构
 
+> ⚠️ **开始前请先阅读 [【准备篇】](./articles/【准备篇】从零构建%20AI%20Agent｜5分钟搭好开发环境.md) 配置开发环境**，5 分钟搭好 Python + API Key，然后按顺序学习。
+
 | 讲次 | 主题 | 核心能力 |
 |------|------|----------|
 | 01 | 什么是 AI Agent？ | 理解 Agent 概念，聊天机器人 vs Agent 的区别 |
@@ -22,13 +24,13 @@
 ### 环境要求
 
 - Python 3.10+
-- 一个 OpenAI 兼容的 API Key（OpenAI / DeepSeek / 阿里百炼 均可）
+- 一个 OpenAI 兼容的 API Key（Agnes-AI（免费）/ DeepSeek / OpenAI 均可）
 
 ### 安装
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourname/ai-agent-course.git
+git clone https://github.com/superLxin/AI-AGENT-COURSE.git
 cd ai-agent-course
 
 # 创建虚拟环境
@@ -36,7 +38,7 @@ python3 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # 安装依赖
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 # 配置 API Key
 cp .env.example .env
@@ -49,7 +51,7 @@ cp .env.example .env
 
 ```bash
 cd lecture-02
-python 02_agent_loop.py
+python3 02_agent_loop.py
 ```
 
 ## 技术栈
