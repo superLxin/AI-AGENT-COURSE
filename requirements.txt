@@ -1,0 +1,29 @@
+# LLM 与 Agent 框架
+openai>=1.0.0
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langgraph>=0.2.0
+
+# 向量数据库
+chromadb>=0.5.0
+
+# 记忆管理（第 8 讲）
+mem0ai>=0.1.0
+
+# API 部署（第 9 讲）
+fastapi>=0.115.0
+uvicorn>=0.32.0
+
+# 可观测性（第 9 讲）
+langfuse>=2.0.0
+
+# 协议（第 10 讲）
+mcp>=1.0.0
+
+# 浏览器自动化（第 10 讲）
+browser-use>=0.1.0
+playwright>=1.48.0
+
+# 工具
+python-dotenv>=1.0.0
+httpx>=0.27.0
