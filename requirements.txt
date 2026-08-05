@@ -1,8 +1,8 @@
 # LLM 与 Agent 框架
 openai>=1.0.0
-langchain>=0.3.0
-langchain-openai>=0.2.0
-langgraph>=0.2.0
+langchain>=1.0
+langchain-openai>=1.0
+langgraph>=1.0
 
 # 向量数据库（第 4、8 讲需要；Python ≤3.13）
 chromadb>=0.5.0
