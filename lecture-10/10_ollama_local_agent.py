@@ -15,7 +15,7 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
 
@@ -86,10 +86,11 @@ def create_local_agent(model_name: str = "qwen2.5:7b"):
 
     system_prompt = "你是一个有帮助的助手。使用工具来获取实时信息。用中文回答。"
 
-    agent = create_tool_calling_agent(llm, tools, system_prompt)
-    executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-
-    return executor
+    return create_agent(
+        model=llm,
+        tools=tools,
+        system_prompt=system_prompt,
+    )
 
 
 # ============================================================
@@ -130,8 +131,8 @@ if __name__ == "__main__":
     for q in questions:
         print(f"\n用户：{q}")
         print("-" * 40)
-        result = agent.invoke({"input": q})
-        print(f"\nAgent：{result['output']}")
+        result = agent.invoke({"messages": [{"role": "user", "content": q}]})
+        print(f"\nAgent：{result['messages'][-1].content}")
 
     print("\n" + "=" * 60)
     print("✅ 本地 Agent 演示完成！")

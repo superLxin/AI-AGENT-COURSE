@@ -16,7 +16,7 @@ from datetime import datetime
 import chromadb
 from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
 
@@ -142,10 +142,10 @@ def search_flights(origin: str, destination: str, date: str) -> str:
 def create_agent_with_memory(user_id: str):
     """为指定用户创建带记忆注入的 Agent"""
     base_prompt = "你是一个旅行助手。你可以使用工具来查询天气和航班信息。回答时参考用户偏好，推荐时说明理由。"
-    return AgentExecutor(
-        agent=create_tool_calling_agent(llm, [get_weather, search_flights], base_prompt),
+    return create_agent(
+        model=llm,
         tools=[get_weather, search_flights],
-        verbose=False,
+        system_prompt=base_prompt,
     )
 
 
@@ -154,7 +154,7 @@ def create_agent_with_memory(user_id: str):
 # ============================================================
 
 
-def chat_with_memory(user_input: str, user_id: str, agent_executor: AgentExecutor) -> str:
+def chat_with_memory(user_input: str, user_id: str, graph) -> str:
     """一次完整的对话 + 记忆提取 + 记忆注入"""
 
     # 1. 检索相关记忆
@@ -170,8 +170,8 @@ def chat_with_memory(user_input: str, user_id: str, agent_executor: AgentExecuto
         print("  🧠 无相关记忆")
 
     # 3. 执行 Agent
-    result = agent_executor.invoke({"input": enhanced_input})
-    answer = result["output"]
+    result = graph.invoke({"messages": [{"role": "user", "content": enhanced_input}]})
+    answer = result["messages"][-1].content
 
     # 4. 从本轮对话中提取新记忆
     conversation = f"用户: {user_input}\n助手: {answer}"

@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
 
@@ -60,8 +60,11 @@ llm = ChatOpenAI(
 
 tools = [get_current_time, get_weather, calculate]
 
-agent = create_tool_calling_agent(llm, tools, SYSTEM_PROMPT)
-executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+graph = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt=SYSTEM_PROMPT,
+)
 
 # ============================================================
 # 4. 运行测试
@@ -78,13 +81,12 @@ if __name__ == "__main__":
         print(f"\n{'=' * 60}")
         print(f"用户：{q}")
         print("=" * 60)
-        result = executor.invoke({"input": q})
-        print(f"\nAgent：{result['output']}")
+        result = graph.invoke({"messages": [{"role": "user", "content": q}]})
+        print(f"\nAgent：{result['messages'][-1].content}")
 
     print(f"\n{'=' * 60}")
     print("✅ 对比原生版本：")
     print("  - 不需要手动写 TOOLS_SCHEMA（@tool 自动生成）")
-    print("  - 不需要手动写 while 循环（AgentExecutor 内置）")
+    print("  - 不需要手动写 while 循环（create_agent 内置）")
     print("  - 不需要手动拼接 messages（框架自动管理）")
-    print("  - verbose=True 自动打印思考过程")
     print("=" * 60)

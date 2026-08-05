@@ -9,7 +9,7 @@ import json
 import os
 
 from dotenv import load_dotenv
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
 
@@ -99,8 +99,11 @@ llm = ChatOpenAI(
 
 tools = [get_weather, search_flights, search_hotels]
 
-agent = create_tool_calling_agent(llm, tools, SYSTEM_PROMPT)
-executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+graph = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt=SYSTEM_PROMPT,
+)
 
 # ============================================================
 # 运行
@@ -116,6 +119,6 @@ if __name__ == "__main__":
     )
 
     print(f"用户：{query}\n")
-    result = executor.invoke({"input": query})
+    result = graph.invoke({"messages": [{"role": "user", "content": query}]})
     print(f"\n{'=' * 60}")
-    print(f"Agent 最终回答：\n{result['output']}")
+    print(f"Agent 最终回答：\n{result['messages'][-1].content}")

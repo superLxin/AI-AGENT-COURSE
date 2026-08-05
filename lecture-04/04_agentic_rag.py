@@ -12,7 +12,7 @@ import os
 import chromadb
 from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
 
@@ -113,8 +113,11 @@ llm = ChatOpenAI(
     temperature=0,
 )
 
-agent = create_tool_calling_agent(llm, [search_travel_knowledge], SYSTEM_PROMPT)
-executor = AgentExecutor(agent=agent, tools=[search_travel_knowledge], verbose=True)
+graph = create_agent(
+    model=llm,
+    tools=[search_travel_knowledge],
+    system_prompt=SYSTEM_PROMPT,
+)
 
 # ============================================================
 # 6. 运行
@@ -131,5 +134,5 @@ if __name__ == "__main__":
         print(f"\n{'=' * 60}")
         print(f"用户：{q}")
         print("=" * 60)
-        result = executor.invoke({"input": q})
-        print(f"\n{result['output']}\n")
+        result = graph.invoke({"messages": [{"role": "user", "content": q}]})
+        print(f"\n{result['messages'][-1].content}\n")

@@ -21,10 +21,10 @@ from functools import lru_cache
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -171,37 +171,41 @@ async def chat(request: ChatRequest):
 
     # 2. 创建 Agent
     system_prompt = "你是一个旅行助手。使用工具获取信息，给出友好、准确的回答。"
-    agent = create_tool_calling_agent(model, tools, system_prompt)
-    executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
+    graph = create_agent(
+        model=model,
+        tools=tools,
+        system_prompt=system_prompt,
+    )
 
     # 3. 执行（带缓存）
     callbacks = [langfuse_handler] if langfuse_handler else None
 
-    try:
-        cache_key, result = get_cached_or_compute(
-            request.message,
-            executor.invoke,
-            input=request.message,
-            config={"callbacks": callbacks} if callbacks else {},
+    def run_agent():
+        return graph.invoke(
+            {"messages": [{"role": "user", "content": request.message}]},
+            config={"callbacks": callbacks} if callbacks else None,
         )
+
+    try:
+        cache_key, result = get_cached_or_compute(request.message, run_agent)
 
         elapsed = time.time() - start_time
         print(f"  ⏱️  耗时: {elapsed:.2f}s")
 
-        # 提取工具调用信息
+        # 提取工具调用信息（从消息列表解析）
         tool_calls = []
-        if "intermediate_steps" in result:
-            for step in result["intermediate_steps"]:
-                tool_calls.append({
-                    "tool": step[0].tool,
-                    "input": step[0].tool_input,
-                    "output": str(step[1])[:200],
-                })
+        from langchain_core.messages import AIMessage, ToolMessage
+        tool_msgs = [m for m in result["messages"] if isinstance(m, ToolMessage)]
+        for msg in tool_msgs:
+            tool_calls.append({
+                "tool": msg.name,
+                "output": str(msg.content)[:200],
+            })
 
         return ChatResponse(
-            reply=result["output"],
+            reply=result["messages"][-1].content,
             model_used=model.model_name,
-            from_cache=(cache_key in cache and cache_key != cache_key),
+            from_cache=False,
             tool_calls=tool_calls,
             timestamp=datetime.now().isoformat(),
         )
