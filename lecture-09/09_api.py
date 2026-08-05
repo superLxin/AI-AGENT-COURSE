@@ -32,8 +32,12 @@ load_dotenv()
 # 1. 模型路由：简单问题用小模型，复杂问题用大模型
 # ============================================================
 
-small_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-large_llm = ChatOpenAI(model="gpt-4o", temperature=0)
+MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+# 模型路由演示：实际生产中可以配置两个不同的模型
+# 例如 OPENAI_SMALL_MODEL / OPENAI_LARGE_MODEL
+# 这里为简化教学，两个路由使用同一模型，仅温度不同
+small_llm = ChatOpenAI(model=MODEL, temperature=0)
+large_llm = ChatOpenAI(model=MODEL, temperature=0.3)
 
 SIMPLE_KEYWORDS = ["你好", "谢谢", "再见", "帮助", "天气", "几点", "今天"]
 COMPLEX_KEYWORDS = ["规划", "行程", "攻略", "对比", "推荐方案", "预订"]
@@ -45,10 +49,10 @@ def choose_model(user_input: str) -> ChatOpenAI:
     is_simple = any(kw in user_input for kw in SIMPLE_KEYWORDS) and not is_complex
 
     if is_complex:
-        print(f"  🧠 路由到: gpt-4o (复杂问题)")
+        print(f"  🧠 路由到: {MODEL} (复杂问题, temperature=0.3)")
         return large_llm
     else:
-        print(f"  ⚡ 路由到: gpt-4o-mini (简单问题)")
+        print(f"  ⚡ 路由到: {MODEL} (简单问题, temperature=0)")
         return small_llm
 
 
