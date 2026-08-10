@@ -80,6 +80,12 @@ async with ClientSession(server) as session:
     print("💡 关键思想：")
     print("  工具生态化——不自己造轮子，接入社区现成的 MCP Server")
     print("  你的 Agent 只需要成为一个 MCP Client")
+    print()
+    print("🔗 MCP 与可插拔 Skill 的关系：")
+    print("  MCP Server 暴露的三样东西中，'Prompts' 就是 Skill 的工业级实现。")
+    print("  04 讲我们硬编码了 Skill，10_travel_agent_full.py 里演进为")
+    print("  从 skills/ 目录自动扫描 .md 文件——这本质上就是 MCP Prompts 的")
+    print("  简化版：可复用的提示模板，按需发现，按需加载。")
     print("=" * 60)
 
 

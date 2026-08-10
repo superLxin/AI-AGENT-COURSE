@@ -11,7 +11,7 @@
 | 01 | 什么是 AI Agent？ | 理解 Agent 概念，聊天机器人 vs Agent 的区别 |
 | 02 | 动手构建第一个 Agent | 原生 Python 实现 Agent 循环 + LangChain 入门 |
 | 03 | Agent 的超能力：工具调用 | Function Calling 原理，定义工具，Agent 自动选择 |
-| 04 | Agent 的知识库：Agentic RAG | Chroma 向量数据库，检索增强生成，迭代检索 |
+| 04 | Agent 的知识库：RAG 与 Skill | Chroma 向量数据库，Agentic RAG，可插拔 Skill 技能包 |
 | 05 | Agent 的思考方式：规划与元认知 | LangGraph 状态图，任务分解，自纠错 |
 | 06 | 多 Agent 协作：团队作战 | Supervisor 模式，专业分工，并行协作 |
 | 07 | 构建可信赖的 Agent | Human-in-the-Loop，上下文工程，安全护栏 |
@@ -51,7 +51,7 @@ cp .env.example .env
 
 ```bash
 cd lecture-02
-python3 02_agent_loop.py
+python3 02_agent_loop_raw.py
 ```
 
 ## 技术栈

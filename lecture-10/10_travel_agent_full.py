@@ -6,6 +6,7 @@
 能力清单：
 ✅ 工具调用（查天气、搜航班、找酒店）
 ✅ 知识库检索（Chroma RAG）
+✅ 可插拔 Skill（skills/ 目录下 .md 文件自动发现，按需加载）
 ✅ 规划与自检（元认知）
 ✅ 多 Agent 协作（Supervisor 模式）
 ✅ 安全护栏（Human-in-the-Loop）
@@ -16,6 +17,7 @@ import json
 import os
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import TypedDict, Annotated
 
 import chromadb
@@ -92,7 +94,74 @@ def save_user_memory(conversation: str, user_id: str):
         pass
 
 # ============================================================
-# 3. 工具定义
+# 3. 可插拔 Skill 系统
+# ============================================================
+# Skill 文件放在 skills/ 目录下，每个 .md 文件 = 一个 Skill
+# Agent 通过 load_skill 按需加载，无需重启
+# 这和 MCP 协议的 "Prompts" 概念一脉相承：可复用的提示模板，按需发现和加载
+
+SKILLS_DIR = Path(__file__).parent / "skills"
+_skill_cache: dict[str, str] = {}  # 内存缓存，避免重复读盘
+
+
+def _scan_skills() -> dict[str, str]:
+    """扫描 skills/ 目录，返回 {skill_name: file_path}"""
+    if not SKILLS_DIR.exists():
+        return {}
+    return {
+        f.stem: str(f)
+        for f in SKILLS_DIR.glob("*.md")
+    }
+
+
+def _load_skill_file(skill_name: str) -> str | None:
+    """从文件加载 Skill 内容（带缓存）"""
+    if skill_name in _skill_cache:
+        return _skill_cache[skill_name]
+
+    skill_files = _scan_skills()
+    if skill_name not in skill_files:
+        return None
+
+    content = Path(skill_files[skill_name]).read_text(encoding="utf-8")
+    _skill_cache[skill_name] = content
+    return content
+
+
+@tool
+def list_skills() -> str:
+    """
+    列出所有可用的 Skill（技能包）。
+    当用户想知道有哪些专业能力可用时调用。
+    """
+    skill_files = _scan_skills()
+    if not skill_files:
+        return "当前没有可用的 Skill。请在 skills/ 目录下添加 .md 文件。"
+    lines = ["可用的 Skill："]
+    for name, path in skill_files.items():
+        # 读取第一行作为简介
+        first_line = Path(path).read_text(encoding="utf-8").strip().split("\n")[0]
+        first_line = first_line.lstrip("#").strip()
+        lines.append(f"  - {name}: {first_line}")
+    return "\n".join(lines)
+
+
+@tool
+def load_skill(skill_name: str) -> str:
+    """
+    加载指定 Skill（技能包），获取专业方法论和判断规则。
+    当需要做行程规划、预算评估、美食推荐等需要专业指导时使用。
+    skill_name: Skill 名称（不含 .md 后缀），先用 list_skills 查看可用 Skill
+    """
+    content = _load_skill_file(skill_name)
+    if content is None:
+        available = list(_scan_skills().keys())
+        return f"未找到 Skill '{skill_name}'。可用 Skill：{', '.join(available) if available else '无'}"
+    return content
+
+
+# ============================================================
+# 4. 工具定义
 # ============================================================
 
 
@@ -133,7 +202,7 @@ def search_knowledge(query: str) -> str:
 
 
 # ============================================================
-# 4. 专业 Agent
+# 5. 专业 Agent
 # ============================================================
 
 flight_expert = create_react_agent(llm, [search_flights, get_weather],
@@ -142,11 +211,11 @@ flight_expert = create_react_agent(llm, [search_flights, get_weather],
 hotel_expert = create_react_agent(llm, [search_hotels],
     prompt="你是酒店专家。帮助搜索酒店，推荐时说明理由。")
 
-guide_expert = create_react_agent(llm, [get_weather, search_knowledge],
-    prompt="你是行程专家。综合航班、酒店、天气、攻略信息，编排合理行程。")
+guide_expert = create_react_agent(llm, [get_weather, search_knowledge, load_skill, list_skills],
+    prompt="你是行程专家。综合航班、酒店、天气、攻略信息，编排合理行程。需要规划方法论时先用 list_skills 查看可用 Skill，再用 load_skill 加载。")
 
 # ============================================================
-# 5. Supervisor 模式
+# 6. Supervisor 模式
 # ============================================================
 
 
@@ -200,7 +269,7 @@ def human_approval(state: State) -> dict:
 
 
 # ============================================================
-# 6. 构建状态图
+# 7. 构建状态图
 # ============================================================
 
 graph = StateGraph(State)
@@ -227,7 +296,7 @@ app = graph.compile()
 
 
 # ============================================================
-# 7. 主入口
+# 8. 主入口
 # ============================================================
 
 def travel_agent(user_input: str, user_id: str = "anonymous") -> str:
