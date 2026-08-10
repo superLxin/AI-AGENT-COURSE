@@ -66,3 +66,11 @@ python3 02_agent_loop_raw.py
 - **本地模型**: Ollama
 
 不绑定任何特定云服务商，所有代码只需一个 OpenAI 兼容 API Key 即可运行。
+
+## 关注公众号
+
+本课程配套微信公众号「科技百晓通」系列文章，扫码关注获取更新推送：
+
+<p align="center">
+  <img src="wechat_QRCode.jpg" alt="微信公众号二维码" width="200">
+</p>
