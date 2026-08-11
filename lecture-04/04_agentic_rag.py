@@ -27,11 +27,28 @@ load_dotenv()
 # 持久化存储到本地目录
 chroma_client = chromadb.PersistentClient(path="./chroma_data")
 
-# 使用 OpenAI Embedding（也支持免费的本地模型）
-embedding_fn = embedding_functions.OpenAIEmbeddingFunction(
-    api_key=os.environ["OPENAI_API_KEY"],
-    model_name="text-embedding-3-small",
-)
+# Embedding 模型：优先用 API，不可用时自动降级为本地模型
+# Agnes-AI / DeepSeek 不提供 embedding 接口，需降级到本地 sentence-transformers
+EMBEDDING_MODEL = os.environ.get("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+
+try:
+    embedding_fn = embedding_functions.OpenAIEmbeddingFunction(
+        api_key=os.environ["OPENAI_API_KEY"],
+        model_name=EMBEDDING_MODEL,
+    )
+    # 验证 API 是否可用（一次轻量调用）
+    embedding_fn(["test"])
+    print(f"✅ 使用 API Embedding 模型: {EMBEDDING_MODEL}")
+except Exception:
+    print(f"⚠️  API Embedding 模型 {EMBEDDING_MODEL} 不可用，降级为本地模型")
+    embedding_fn = embedding_functions.DefaultEmbeddingFunction()
+    print("✅ 使用本地 Embedding 模型: all-MiniLM-L6-v2")
+    # 如果之前用 API embedding 创建过集合，需删除重建（embedding 函数不兼容）
+    try:
+        chroma_client.delete_collection("travel_knowledge")
+        print("🔄 已清理旧集合（API embedding → 本地 embedding）")
+    except Exception:
+        pass
 
 # 创建或获取集合
 collection = chroma_client.get_or_create_collection(
